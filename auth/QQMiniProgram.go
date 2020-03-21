@@ -8,13 +8,18 @@ import (
 	"errors"
 	"github.com/parnurzeal/gorequest"
 	"regexp"
+	"time"
 )
 
 var CODE_SESSION_URL = `https://api.q.qq.com/sns/jscode2session`
+var GET_ACCESS_TOKEN = `https://api.q.qq.com/api/getToken`
+var CREATE_MINI_CODE = `https://api.q.qq.com/api/json/qqa/CreateMiniCode`
 
 type qqMiniProgram struct {
 	appid string
 	secret string
+	accessToken string
+	expireTime int64
 }
 
 func NewQQMiniProgram(appid, secret string) *qqMiniProgram {
@@ -60,6 +65,58 @@ func (qq *qqMiniProgram) Code2Session(code string) (sessionKey string, openId st
 	sessionKey = resp.SessionKey
 	return
 }
+
+type AccessTokenResp struct {
+	AccessToken string `json:"access_token"`
+	ExpiresIn int64    `json:"expires_in"`
+	Errcode int32      `json:"errcode"`
+	Errmsg string      `json:"errmsg"`
+}
+
+// 参照https://q.qq.com/wiki/develop/miniprogram/server/open_port/port_use.html#getaccesstoken
+func (qq *qqMiniProgram) GetAccessToken() (err error) {
+	request := gorequest.New().Get(GET_ACCESS_TOKEN)
+	request.Debug = true
+	request.Param("grant_type", "client_credential")
+	request.Param("appid", qq.appid)
+	request.Param("secret", qq.secret)
+
+	r := &AccessTokenResp{}
+	_, _, errs := request.EndStruct(r)
+	if len(errs) > 0 {
+		err = errs[0]
+		return
+	}
+	qq.accessToken = r.AccessToken
+	qq.expireTime = r.ExpiresIn + time.Now().Unix()
+	return
+}
+
+func (qq *qqMiniProgram) CreateMiniCode(path string) (imageBuff []byte, err error) {
+	nowTime := time.Now().Unix()
+	if qq.expireTime <= nowTime {
+		err = qq.GetAccessToken()
+		if err != nil {
+			return
+		}
+	}
+	request := gorequest.New().Post(CREATE_MINI_CODE)
+	request.Debug = true
+	request.Param("access_token", qq.accessToken)
+	body := map[string]interface{}{
+		"access_token": qq.accessToken,
+		"appid": qq.appid,
+		"path": path,
+	}
+	_, datas, errs := request.SendMap(body).EndBytes()
+	if len(errs) > 0 {
+		err = errs[0]
+		return
+	}
+	imageBuff = datas
+	return
+}
+
 
 // https://q.qq.com/wiki/develop/miniprogram/frame/open_ability/open_userinfo.html
 func (qq *qqMiniProgram) Decrypt(encryptedData, iv string, sessionKey string) (map[string]interface{}, error) {
