@@ -19,6 +19,10 @@ import (
 	"time"
 )
 
+var DefaultPay = &QQPay{}
+
+
+
 var QQPayUrl = `https://api.qpay.qq.com/cgi-bin/epay/qpay_epay_b2c.cgi`
 type QQPay struct {
 	AppId string
@@ -59,6 +63,10 @@ type QQPayResp struct {
 type TransMoneyResp struct {
 	OutTradeNo string
 	TransactionId string
+}
+
+func TransMoney(openid string, money int) (resp TransMoneyResp, err error) {
+	return DefaultPay.TransMoney(openid, money)
 }
 
 func (p *QQPay) TransMoney(openid string, money int) (resp TransMoneyResp, err error) {
