@@ -22,6 +22,23 @@ type qqMiniProgram struct {
 	expireTime int64
 }
 
+var defaultQQMini *qqMiniProgram
+func Init(appid, secret string) {
+	defaultQQMini = NewQQMiniProgram(appid, secret)
+}
+
+func GetAccessToken() string {
+	if defaultQQMini.expireTime > 0 && time.Now().Unix() > defaultQQMini.expireTime {
+		return defaultQQMini.accessToken
+	}
+	if err := defaultQQMini.GetAccessToken(); err != nil {
+		return ""
+	}
+	return defaultQQMini.accessToken
+}
+
+
+
 func NewQQMiniProgram(appid, secret string) *qqMiniProgram {
 	qq := &qqMiniProgram{
 		appid:appid,
