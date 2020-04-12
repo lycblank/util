@@ -111,7 +111,7 @@ func (p *QQPay) TransMoney(openid string, money int) (resp TransMoneyResp, err e
 	}
 	fmt.Println(qqResp)
 
-	if !strings.EqualFold(qqResp.ErrCode,"ok") {
+	if !strings.EqualFold(qqResp.RetCode,"0") {
 		err = errors.New(qqResp.ErrCode)
 		return
 	}
