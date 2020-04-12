@@ -5,13 +5,12 @@ import (
 	"crypto/rand"
 	"crypto/tls"
 	"crypto/x509"
-	"io/ioutil"
-	mrand "math/rand"
 	"encoding/xml"
-	"errors"
 	"fmt"
 	"github.com/parnurzeal/gorequest"
 	"io"
+	"io/ioutil"
+	mrand "math/rand"
 	"net/http"
 	"sort"
 	"strconv"
@@ -53,7 +52,9 @@ type QQPayArg struct {
 }
 
 type QQPayResp struct {
-	ReturnCode string    `xml:"return_code"`
+	XMLName    xml.Name   `xml:"xml"`
+	RetCode string    		`xml:"retcode"`
+	RetMsg string 			`xml:"retmsg"`
 	TransactionId string `xml:"transaction_id"`
 	ErrCodeDesc string `xml:"err_code_desc"`
 }
@@ -100,11 +101,12 @@ func (p *QQPay) TransMoney(openid string, money int) (resp TransMoneyResp, err e
 	if err != nil {
 		return
 	}
+	fmt.Println(qqResp)
 
-	if qqResp.ReturnCode != "SUCCESS" {
+	/*if qqResp.ReturnCode != "SUCCESS" {
 		err = errors.New(qqResp.ErrCodeDesc)
 		return
-	}
+	}*/
 
 	resp.OutTradeNo = arg.OutTradeNo
 	resp.TransactionId = qqResp.TransactionId
