@@ -26,7 +26,7 @@ type QQPay struct {
 	OpUserId string
 	OpUserPasswd string
 	MchId string
-	SpbillCreateId string // 调用接口ip地址
+	SpbillCreateIp string // 调用接口ip地址
 	NotifyUrl string
 	Key string
 
@@ -38,16 +38,18 @@ type QQPay struct {
 // 参照 https://qpay.qq.com/buss/wiki/206/1215
 type QQPayArg struct {
 	XMLName    xml.Name   `xml:"xml"`
+	InputCharset string   `xml:"input_charset"`
 	Openid string         `xml:"openid"`
 	OutTradeNo string     `xml:"out_trade_no"`
 	TotalFee int          `xml:"total_fee"`
-	AppId string          `xml:"app_id"`
+	AppId string          `xml:"appid"`
 	OpUserId string       `xml:"op_user_id"`
 	OpUserPasswd string   `xml:"op_user_passwd"`
 	MchId string          `xml:"mch_id"`
-	SpbillCreateId string `xml:"spbill_create_id"` // 调用接口ip地址
-	NotifyUrl string      `xml:"notify_url"`
+	SpbillCreateIp string `xml:"spbill_create_ip"` // 调用接口ip地址
+	//NotifyUrl string      `xml:"notify_url"`
 	NonceStr string 	  `xml:"nonce_str"`
+	FeeType string 		  `xml:"fee_type"`
 	Sign string 		  `xml:"sign"`
 }
 
@@ -70,15 +72,17 @@ func TransMoney(openid string, money int) (resp TransMoneyResp, err error) {
 
 func (p *QQPay) TransMoney(openid string, money int) (resp TransMoneyResp, err error) {
 	arg := &QQPayArg{
+		InputCharset:"UTF-8",
+		FeeType:"CNY",
 		AppId:p.AppId,
 		Openid:openid,
 		MchId:p.MchId,
-		NonceStr:GetNotifyStr(),
+		NonceStr:"123",//GetNotifyStr(),
 		TotalFee:money,
 		OpUserId:p.OpUserId,
 		OpUserPasswd:p.OpUserPasswd,
-		SpbillCreateId:p.SpbillCreateId,
-		NotifyUrl:p.NotifyUrl,
+		SpbillCreateIp:p.SpbillCreateIp,
+		//NotifyUrl:p.NotifyUrl,
 		OutTradeNo: GetOutTradeNo(),
 	}
 	arg.Sign = p.GenSign(arg)
@@ -86,10 +90,12 @@ func (p *QQPay) TransMoney(openid string, money int) (resp TransMoneyResp, err e
 	if err != nil {
 		return
 	}
+	fmt.Println(string(datas))
 	request := gorequest.New().Post(QQPayUrl)
 	request.Debug = true
 	request.SendString(string(datas))
 	request.Transport = GetTransport(p.KeyFile, p.CertFile, p.RootCa)
+	request.Header.Set(`Content-Type`, `application/xml`)
 	_, body, errs := request.EndBytes()
 	if len(errs) > 0 {
 		err = errs[0]
@@ -114,15 +120,17 @@ func (p *QQPay) TransMoney(openid string, money int) (resp TransMoneyResp, err e
 }
 func (p *QQPay) GenSign(arg *QQPayArg) string {
 	v := map[string]string{
+		"fee_type":arg.FeeType,
+		"input_charset": arg.InputCharset,
 		"openid":arg.Openid,
 		"out_trade_no":arg.OutTradeNo,
 		"total_fee":strconv.Itoa(arg.TotalFee),
-		"app_id": arg.AppId,
+		"appid": arg.AppId,
 		"op_user_id": arg.OpUserId,
 		"op_user_passwd": arg.OpUserPasswd,
 		"mch_id": arg.MchId,
-		"spbill_create_id":arg.SpbillCreateId,
-		"notify_url": arg.NotifyUrl,
+		"spbill_create_ip":arg.SpbillCreateIp,
+//		"notify_url": arg.NotifyUrl,
 		"nonce_str": arg.NonceStr,
 	}
 
