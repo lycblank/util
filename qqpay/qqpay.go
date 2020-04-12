@@ -6,6 +6,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"github.com/parnurzeal/gorequest"
 	"io"
@@ -17,6 +18,7 @@ import (
 	"strings"
 	"time"
 )
+
 
 var DefaultPay = &QQPay{}
 
@@ -90,7 +92,6 @@ func (p *QQPay) TransMoney(openid string, money int) (resp TransMoneyResp, err e
 	if err != nil {
 		return
 	}
-	fmt.Println(string(datas))
 	request := gorequest.New().Post(QQPayUrl)
 	request.Debug = true
 	request.SendString(string(datas))
@@ -109,10 +110,10 @@ func (p *QQPay) TransMoney(openid string, money int) (resp TransMoneyResp, err e
 	}
 	fmt.Println(qqResp)
 
-	/*if qqResp.ReturnCode != "SUCCESS" {
-		err = errors.New(qqResp.ErrCodeDesc)
+	if !strings.EqualFold(qqResp.RetCode,"ok") {
+		err = errors.New(qqResp.RetCode)
 		return
-	}*/
+	}
 
 	resp.OutTradeNo = arg.OutTradeNo
 	resp.TransactionId = qqResp.TransactionId
