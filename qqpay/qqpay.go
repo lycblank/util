@@ -58,6 +58,7 @@ type QQPayArg struct {
 type QQPayResp struct {
 	XMLName    xml.Name   `xml:"xml"`
 	RetCode string    		`xml:"retcode"`
+	ErrCode string    		`xml:"err_code"`
 	RetMsg string 			`xml:"retmsg"`
 	TransactionId string `xml:"transaction_id"`
 	ErrCodeDesc string `xml:"err_code_desc"`
@@ -110,8 +111,8 @@ func (p *QQPay) TransMoney(openid string, money int) (resp TransMoneyResp, err e
 	}
 	fmt.Println(qqResp)
 
-	if !strings.EqualFold(qqResp.RetCode,"ok") {
-		err = errors.New(qqResp.RetCode)
+	if !strings.EqualFold(qqResp.ErrCode,"ok") {
+		err = errors.New(qqResp.ErrCode)
 		return
 	}
 
