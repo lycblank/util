@@ -21,8 +21,6 @@ import (
 
 var DefaultPay = &QQPay{}
 
-
-
 var QQPayUrl = `https://api.qpay.qq.com/cgi-bin/epay/qpay_epay_b2c.cgi`
 type QQPay struct {
 	AppId string
@@ -186,6 +184,7 @@ func GetTransport(key,cert string, ca string) *http.Transport {
 		TLSClientConfig:&tls.Config{
 			RootCAs:pool,
 			Certificates:[]tls.Certificate{certs},
+			InsecureSkipVerify:true,
 		},
 	}
 	return tr
